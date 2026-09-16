@@ -205,4 +205,13 @@ export class MarketProcessor {
       lastTimestamp: 0
     };
   }
+
+  getSequence(
+  symbol: InstrumentSymbol
+): number {
+  return (
+    this.runtime.get(symbol)?.lastSequence ??
+    0
+  );
+}
 }
