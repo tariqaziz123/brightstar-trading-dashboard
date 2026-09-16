@@ -70,6 +70,26 @@ const marketSlice = createSlice({
           : null;
     },
 
+    upsertInstruments(
+  state,
+  action: PayloadAction<InstrumentState[]>
+) {
+  for (const instrument of action.payload) {
+    state.bySymbol[instrument.symbol] =
+      instrument;
+  }
+
+  state.lastEventAt =
+    action.payload.length > 0
+      ? Math.max(
+          ...action.payload.map(
+            (instrument) =>
+              instrument.lastUpdated
+          )
+        )
+      : state.lastEventAt;
+},
+
     clearMarket(state) {
       state.bySymbol = {};
       state.lastEventAt = null;
@@ -81,6 +101,7 @@ export const {
   upsertInstrument,
   setConnectionStatus,
   setSnapshot,
+  upsertInstruments,
   clearMarket,
 } = marketSlice.actions;
 

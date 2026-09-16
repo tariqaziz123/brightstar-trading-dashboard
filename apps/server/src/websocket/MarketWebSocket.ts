@@ -3,7 +3,7 @@ import type { Server } from "http";
 
 import type {
   InstrumentState,
-  MarketTickEvent
+  MarketStateEvent,
 } from "@brightstar/shared";
 
 export class MarketWebSocket {
@@ -24,23 +24,13 @@ broadcastState(
   state: InstrumentState,
   sequence: number
 ): void {
-  const event: MarketTickEvent = {
+  const event: MarketStateEvent = {
     type: "MARKET_TICK",
     timestamp: Date.now(),
     payload: {
-      symbol: state.symbol,
-      timestamp: state.lastUpdated,
+      ...state,
       sequence,
-
-      ltp: state.ltp,
-
-      bid: state.bid,
-      ask: state.ask,
-
-      bidQuantity: state.bidQuantity,
-      askQuantity: state.askQuantity,
-      tradedQuantity: state.tradedQuantity
-    }
+    },
   };
 
   const message = JSON.stringify(event);
