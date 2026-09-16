@@ -1,0 +1,17 @@
+{
+  "name": "brightstar-trading-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w @brightstar/server\" \"npm run dev -w @brightstar/web\"",
+    "build": "npm run build -w @brightstar/shared && npm run build -w @brightstar/server && npm run build -w @brightstar/web",
+    "typecheck": "npm run typecheck -w @brightstar/shared && npm run typecheck -w @brightstar/server && npm run typecheck -w @brightstar/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
