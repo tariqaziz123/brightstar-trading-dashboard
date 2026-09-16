@@ -71,3 +71,13 @@ export interface MarketState {
 
   lastEventAt: number | null;
 }
+
+export interface MarketSnapshot {
+  timestamp: number;
+  instruments: InstrumentState[];
+}
+
+export interface HealthResponse {
+  status: "ok";
+  timestamp: number;
+}

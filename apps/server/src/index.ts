@@ -26,13 +26,21 @@ const simulator =
 
 const processor =
   new MarketProcessor(instruments);
+  
+for (const config of instruments) {
+  const initialTick =
+    simulator.generateTick(config);
+
+  processor.processTick(initialTick);
+}
 
 const marketWebSocket =
   new MarketWebSocket(httpServer);
 
 app.get("/health", (_req, res) => {
   res.json({
-    status: "ok"
+    status: "ok",
+    timestamp: Date.now()
   });
 });
 
@@ -41,9 +49,10 @@ app.get("/instruments", (_req, res) => {
 });
 
 app.get("/snapshot", (_req, res) => {
-  res.json(
-    processor.getAllStates()
-  );
+  res.json({
+    timestamp: Date.now(),
+    instruments: processor.getAllStates()
+  });
 });
 
 httpServer.listen(PORT, () => {
