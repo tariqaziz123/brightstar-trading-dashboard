@@ -11,6 +11,10 @@ export class MarketWebSocket {
 
   private readonly wss: WebSocketServer;
 
+  /**
+   * Creates an instance of MarketWebSocket.
+   * @param server 
+   */
   constructor(server: Server) {
     this.wss = new WebSocketServer({
       server,
@@ -20,11 +24,16 @@ export class MarketWebSocket {
     this.setup();
   }
 
-broadcastState(
-  state: InstrumentState,
-  sequence: number
-): void {
-  const event: MarketStateEvent = {
+  /**
+   * Broadcasts the current state of an instrument to all connected clients.
+   * @param state 
+   * @param sequence 
+   */
+  broadcastState(
+    state: InstrumentState,
+    sequence: number
+  ): void {
+    const event: MarketStateEvent = {
     type: "MARKET_TICK",
     timestamp: Date.now(),
     payload: {
@@ -42,6 +51,8 @@ broadcastState(
   }
 }
 
+/**   * Closes the WebSocket server and all connected clients.
+   */
   close(): void {
     for (const client of this.clients) {
       client.close();
@@ -50,6 +61,9 @@ broadcastState(
     this.wss.close();
   }
 
+  /**
+   * Sets up the WebSocket server and event listeners.
+   */
   private setup(): void {
     this.wss.on("connection", (socket) => {
       this.clients.add(socket);

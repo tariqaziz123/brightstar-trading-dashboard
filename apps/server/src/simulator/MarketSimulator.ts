@@ -19,6 +19,10 @@ export class MarketSimulator {
     SimulatorState
   >();
 
+  /**
+   * Creates an instance of MarketSimulator.
+   * @param configs 
+   */
   constructor(
     private readonly configs: InstrumentConfig[]
   ) {
@@ -33,6 +37,11 @@ export class MarketSimulator {
     }
   }
 
+  /**
+   * Generates a market tick for the specified instrument configuration.
+   * @param config 
+   * @returns 
+   */
   generateTick(config: InstrumentConfig): MarketTick {
     const state = this.states.get(config.symbol);
 
@@ -122,6 +131,10 @@ export class MarketSimulator {
     };
   }
 
+  /**
+   * Gets a snapshot of the current market ticks for all instruments.
+   * @returns 
+   */
   getSnapshot(): MarketTick[] {
     return this.configs.map((config) =>
       this.generateTick(config)

@@ -14,6 +14,10 @@ import {
   STALE_THRESHOLD_MS,
 } from "./marketConfig";
 
+/**
+ * A custom hook that determines if the market data is stale.
+ * @returns 
+ */
 export function useMarketStale(): boolean {
   const lastEventAt =
     useAppSelector(selectLastEventAt);
@@ -22,6 +26,10 @@ export function useMarketStale(): boolean {
     useState(false);
 
   useEffect(() => {
+    /**
+     * Checks if the market data is stale.
+     * @returns 
+     */
     const checkStale = () => {
       if (lastEventAt === null) {
         setIsStale(true);

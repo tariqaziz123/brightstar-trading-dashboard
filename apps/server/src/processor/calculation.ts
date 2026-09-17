@@ -1,3 +1,9 @@
+/**
+ * Calculates the absolute change between two prices.
+ * @param currentPrice 
+ * @param previousPrice 
+ * @returns 
+ */
 export function calculateChange(
   currentPrice: number,
   previousPrice: number
@@ -5,6 +11,12 @@ export function calculateChange(
   return currentPrice - previousPrice;
 }
 
+/**
+ * Calculates the percentage change between two prices. 
+ * @param currentPrice 
+ * @param previousPrice 
+ * @returns 
+ */
 export function calculateChangePercent(
   currentPrice: number,
   previousPrice: number
@@ -20,6 +32,11 @@ export function calculateChangePercent(
   );
 }
 
+/**
+ * Calculates the rolling return based on an array of prices.
+ * @param prices 
+ * @returns 
+ */ 
 export function calculateRollingReturn(
   prices: number[]
 ): number {
@@ -41,6 +58,11 @@ export function calculateRollingReturn(
   );
 }
 
+/**
+ * Calculates the rolling average price based on an array of prices.
+ * @param prices 
+ * @returns 
+ */
 export function calculateRollingAverage(
   prices: number[]
 ): number {

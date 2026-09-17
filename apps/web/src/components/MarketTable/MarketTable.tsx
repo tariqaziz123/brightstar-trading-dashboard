@@ -3,6 +3,10 @@
 import { instrumentSymbols } from "../../features/market/marketSelectors";
 import { MarketRow } from "./MarketRow";
 
+/**
+ * MarketTable is a React component that displays a table of market data.
+ * @returns A React component that renders the market table.
+ */
 export function MarketTable() {
   return (
     <div className="overflow-x-auto">

@@ -20,6 +20,10 @@ import {
 
 import { useAppSelector } from "../app/hooks";
 
+/** * HomePage is the main component for the application's homepage.
+ * It displays real-time market data, including a price chart, momentum scanner, and live market table.
+ * @returns A React component that renders the homepage.
+ */
 export default function HomePage() {
   useMarketStream();
 

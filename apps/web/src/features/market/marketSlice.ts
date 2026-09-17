@@ -35,6 +35,11 @@ const marketSlice = createSlice({
   initialState,
 
   reducers: {
+    /**
+     * upsertInstrument updates or inserts a single instrument's state in the market store.
+     * @param state - The current market store state.
+     * @param action - The action containing the instrument state to be upserted.
+     */
     upsertInstrument(
       state,
       action: PayloadAction<
@@ -67,6 +72,11 @@ const marketSlice = createSlice({
       );
     },
 
+    /**
+     * setConnectionStatus updates the connection status in the market store.
+     * @param state - The current market store state.
+     * @param action - The action containing the new connection status.
+     */
     setConnectionStatus(
       state,
       action: PayloadAction<ConnectionStatus>
@@ -75,6 +85,11 @@ const marketSlice = createSlice({
         action.payload;
     },
 
+    /**
+     * setSnapshot updates the market store with a snapshot of instrument states.
+     * @param state - The current market store state.
+     * @param action - The action containing the snapshot of instrument states.
+     */
     setSnapshot(
       state,
       action: PayloadAction<
@@ -115,6 +130,11 @@ const marketSlice = createSlice({
       }
     },
 
+    /**
+     * upsertInstruments updates or inserts multiple instruments' states in the market store.
+     * @param state - The current market store state.
+     * @param action - The action containing the array of instrument states to be upserted.
+     */
     upsertInstruments(
       state,
       action: PayloadAction<
@@ -155,6 +175,10 @@ const marketSlice = createSlice({
       }
     },
 
+    /**
+     * clearMarket resets the market store state to its initial state.
+     * @param state - The current market store state.
+     */
     clearMarket(state) {
       state.bySymbol = {};
       state.lastEventAt = null;

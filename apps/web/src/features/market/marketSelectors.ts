@@ -7,12 +7,27 @@ import {
 
 import type { RootState } from "../../app/store";
 
+/**
+ * selectMarketState returns the market state from the root state.
+ * @param state 
+ * @returns 
+ */
 export const selectMarketState = (state: RootState) =>
   state.market;
 
+/**
+ * selectConnectionStatus returns the connection status from the market state.
+ * @param state 
+ * @returns 
+ */
 export const selectConnectionStatus = (state: RootState) =>
   state.market.connectionStatus;
 
+/**
+ * selectLastEventAt returns the timestamp of the last event from the market state.
+ * @param state 
+ * @returns 
+ */
 export const selectLastEventAt = (state: RootState) =>
   state.market.lastEventAt;
 
@@ -37,6 +52,11 @@ export const selectAllInstruments = createSelector(
 export const instrumentSymbols: InstrumentSymbol[] =
   instruments.map((instrument) => instrument.symbol);
 
+/**
+ * selectInstrumentSymbols returns the list of instrument symbols that are present in the market state.
+ * @param state 
+ * @returns 
+ */
 export const selectInstrumentSymbols = (
   state: RootState
 ): InstrumentSymbol[] => {

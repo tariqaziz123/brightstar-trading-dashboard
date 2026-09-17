@@ -1,3 +1,8 @@
+/**
+ * Generates a pseudorandom number generator using the Mulberry32 algorithm.
+ * @param seed 
+ * @returns 
+ */
 export function mulberry32(seed: number): () => number {
   return function random() {
     let t = seed += 0x6D2B79F5;

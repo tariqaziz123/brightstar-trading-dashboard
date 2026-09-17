@@ -9,6 +9,11 @@ interface TopMoversProps {
   suffix?: string;
 }
 
+/**
+ * TopMovers is a React component that displays a list of top-moving instruments based on a specified metric.
+ * @param param0 
+ * @returns 
+ */
 export function TopMovers({
   title,
   instruments,

@@ -28,6 +28,11 @@ export class MarketWebSocketClient {
 
   private stopped = false;
 
+  /**
+   * 
+   * @param dispatch 
+   * @param onTick 
+   */
   constructor(
     private readonly dispatch: AppDispatch,
     private readonly onTick: (
@@ -35,6 +40,10 @@ export class MarketWebSocketClient {
     ) => void
   ) {}
 
+  /**
+   * Connects to the WebSocket server.
+   * @returns 
+   */
   connect(): void {
     this.stopped = false;
 
@@ -93,6 +102,9 @@ export class MarketWebSocketClient {
     };
   }
 
+  /**
+   * Disconnects from the WebSocket server and stops any reconnection attempts.
+   */
   disconnect(): void {
     this.stopped = true;
 
@@ -112,6 +124,11 @@ export class MarketWebSocketClient {
     );
   }
 
+  /**
+   * Handles incoming WebSocket messages.
+   * @param rawMessage 
+   * @returns 
+   */
   private handleMessage(
     rawMessage: string
   ): void {
@@ -136,6 +153,10 @@ export class MarketWebSocketClient {
     }
   }
 
+  /**
+   * Schedules a reconnection attempt.
+   * @returns 
+   */
   private scheduleReconnect(): void {
     if (this.reconnectTimer) {
       return;
@@ -159,6 +180,11 @@ export class MarketWebSocketClient {
       }, this.reconnectDelay);
   }
 
+  /**
+   * Checks if a value is a valid market tick event.
+   * @param value 
+   * @returns 
+   */
   private isMarketTickEvent(
     value: unknown
   ): value is MarketStateEvent {
@@ -212,6 +238,9 @@ export class MarketWebSocketClient {
     );
   }
 
+  /**
+   * Fetches a snapshot of the current market state from the server and updates the store.
+   */
   private async fetchSnapshot(): Promise<void> {
     try {
       const baseUrl =

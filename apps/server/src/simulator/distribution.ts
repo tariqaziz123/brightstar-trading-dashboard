@@ -1,3 +1,8 @@
+/**
+ * Generates a random number from a standard normal distribution.
+ * @param random 
+ * @returns 
+ */
 export function standardNormal(random: () => number): number {
   const u1 = Math.max(random(), Number.EPSILON);
   const u2 = Math.max(random(), Number.EPSILON);

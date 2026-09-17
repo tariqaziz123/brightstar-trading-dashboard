@@ -18,6 +18,10 @@ interface MarketRowProps {
   symbol: InstrumentSymbol;
 }
 
+/** * getChangeClass returns a CSS class based on the change percentage of an instrument.
+ * @param changePercent - The change percentage of the instrument.
+ * @returns A string representing the CSS class for styling the change percentage.
+ */
 function getChangeClass(
   changePercent: number
 ): string {
@@ -40,6 +44,11 @@ function getChangeClass(
   return "text-gray-600";
 }
 
+/**
+ * MarketRowComponent is a React component that displays a single row in the market table.
+ * @param param0 
+ * @returns 
+ */
 function MarketRowComponent({
   symbol,
 }: Readonly<MarketRowProps>) {

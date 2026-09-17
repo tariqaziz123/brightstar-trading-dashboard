@@ -21,6 +21,11 @@ const statusStyles: Record<
     "bg-yellow-100 text-yellow-700",
 };
 
+/**
+ * ConnectionStatus is a React component that displays the connection status of the market stream.
+ * @param param0 
+ * @returns 
+ */
 export function ConnectionStatus({
   status,
   isStale,

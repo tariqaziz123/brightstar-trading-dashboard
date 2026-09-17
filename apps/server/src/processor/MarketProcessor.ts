@@ -18,11 +18,18 @@ import type {
 
 const ROLLING_WINDOW_SIZE = 10;
 
+/** 
+ * MarketProcessor is responsible for processing incoming market ticks and maintaining the state of each instrument.
+ */
 export class MarketProcessor {
   private readonly runtime: RuntimeState;
 
   private readonly knownSymbols: Set<InstrumentSymbol>;
 
+  /**
+   * Creates an instance of MarketProcessor.
+   * @param instruments 
+   */
   constructor(
     private readonly instruments: InstrumentConfig[]
   ) {
@@ -68,6 +75,11 @@ export class MarketProcessor {
     }
   }
 
+  /**
+   * Processes an incoming market tick and updates the state of the corresponding instrument.
+   * @param tick 
+   * @returns 
+   */
   processTick(
     tick: MarketTick
   ): InstrumentState | null {
@@ -183,12 +195,21 @@ export class MarketProcessor {
     return nextState;
   }
 
+  /**
+   * Gets the current state of an instrument.
+   * @param symbol 
+   * @returns 
+   */
   getState(
     symbol: InstrumentSymbol
   ): InstrumentState | undefined {
     return this.runtime.get(symbol)?.state;
   }
 
+  /**
+   * Gets the state of all instruments.
+   * @returns 
+   */
   getAllStates(): InstrumentState[] {
     return this.instruments.map(
       (instrument) =>
@@ -198,6 +219,11 @@ export class MarketProcessor {
     );
   }
 
+  /**
+   * Gets the last processed sequence number for an instrument.
+   * @param symbol 
+   * @returns 
+   */
   getSequence(
     symbol: InstrumentSymbol
   ): number {

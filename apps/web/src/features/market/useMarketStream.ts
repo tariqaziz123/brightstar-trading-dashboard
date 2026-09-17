@@ -18,6 +18,11 @@ import {
 
 const BATCH_INTERVAL_MS = 50;
 
+/**
+ * A custom hook that manages the market data stream from the WebSocket server.
+ * It connects to the server, listens for market tick events, and batches updates to the Redux store.
+ * @returns
+ */
 export function useMarketStream(): void {
   const dispatch = useAppDispatch();
 
@@ -35,6 +40,10 @@ export function useMarketStream(): void {
   useEffect(() => {
     let mounted = true;
 
+    /**
+     * Flushes the pending tick events to the Redux store.
+     * @returns 
+     */
     const flushPendingTicks = () => {
       if (!mounted) {
         return;

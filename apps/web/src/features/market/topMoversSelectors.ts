@@ -10,6 +10,11 @@ import {
   selectAllInstruments,
 } from "./marketSelectors";
 
+/**
+ * Creates a selector that sorts instruments by a given metric.
+ * @param metric 
+ * @returns 
+ */
 const selectSortedBy =
   (
     metric: (

@@ -12,6 +12,11 @@ type PriceChartProps = {
 
 const MAX_POINTS = 100;
 
+/**
+ * PriceChart is a React component that displays a price chart for a selected instrument.
+ * @param param0 
+ * @returns 
+ */
 export function PriceChart({ instruments }: Readonly<PriceChartProps>) {
   const [selectedSymbol, setSelectedSymbol] =
     useState<InstrumentSymbol>("NIFTY");
