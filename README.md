@@ -8,7 +8,7 @@ The application simulates high-frequency market data on the backend, streams upd
 
 ## Overview
 
-The application provides a real-time market watch and momentum scanner for six instruments:
+The application provides a real-time market watch and momentum scanner for twelve simulated instruments:
 
 * NIFTY
 * BANKNIFTY
@@ -16,16 +16,22 @@ The application provides a real-time market watch and momentum scanner for six i
 * HDFCBANK
 * INFY
 * TCS
+* ICICIBANK
+* SBIN
+* BHARTIARTL
+* ITC
+* LT
+* AXISBANK
 
-The backend generates deterministic market ticks approximately every **100ms per instrument**, resulting in approximately:
+Each instrument generates a market tick approximately every **100ms**, resulting in approximately:
 
 ```text
-6 instruments × 10 ticks/sec = 60 ticks/sec
+12 instruments × 10 ticks/sec = ~120 ticks/sec
 ```
 
-Each market event contains the latest price, bid/ask information, quantities, sequence number, timestamp, and calculated momentum metrics.
+Each market event contains the latest price, bid/ask information, quantities, sequence number, timestamp, and calculated market metrics.
 
-The frontend consumes the stream over WebSocket and updates the UI using **50ms batching** to avoid unnecessary React renders.
+The frontend consumes the stream over WebSocket and uses **50ms batching** to reduce unnecessary Redux updates and React rendering pressure.
 
 ---
 
@@ -33,13 +39,14 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
 
 * Real-time WebSocket market streaming
 * Deterministic market data simulator
-* 6 configurable financial instruments
-* Approximately 60 market events/sec
+* 12 configurable financial instruments
+* Approximately 120 market events/sec
 * Redux Toolkit state management
 * Normalized state by instrument symbol
 * 50ms frontend event batching
+* Latest-value deduplication within each batch
 * Memoized market rows
-* Selective row-level Redux subscriptions
+* Symbol-level Redux subscriptions
 * Top gainers and top losers
 * Momentum scanner
 * Rolling 10-tick return
@@ -52,6 +59,7 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
 * Out-of-order event protection
 * Malformed event validation
 * Unknown-symbol validation
+* Timestamp ordering validation
 * WebSocket automatic reconnect
 * Exponential reconnect backoff
 * REST snapshot recovery
@@ -67,7 +75,7 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
 
 ```text
                          ┌──────────────────────────┐
-                         │       Market Simulator    │
+                         │     Market Simulator     │
                          │                          │
                          │  Deterministic PRNG      │
                          │  GBM-style price model   │
@@ -78,26 +86,27 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
                          ┌──────────────────────────┐
                          │     Market Processor      │
                          │                          │
-                         │ Validation               │
-                         │ Ordering checks          │
-                         │ Change calculation       │
-                         │ Rolling metrics          │
-                         │ Latest state per symbol  │
+                         │  Validation              │
+                         │  Ordering checks         │
+                         │  Change calculation      │
+                         │  Rolling metrics         │
+                         │  Latest state/symbol    │
                          └────────────┬─────────────┘
                                       │
                                       │ Processed state
                                       ▼
                          ┌──────────────────────────┐
-                         │      WebSocket Server    │
+                         │    WebSocket Server      │
                          │                          │
-                         │ /stream                  │
-                         │ Broadcast to clients     │
+                         │    /stream               │
+                         │    Broadcast to clients  │
                          └────────────┬─────────────┘
                                       │
                                       │ MARKET_TICK
                                       ▼
+
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Next.js Frontend                         │
+│                      Next.js Frontend                           │
 │                                                                 │
 │  WebSocket Client                                               │
 │        │                                                        │
@@ -107,10 +116,10 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
 │        ▼                                                        │
 │  Redux Toolkit Store                                            │
 │        │                                                        │
-│        ├───────────────┐                                        │
-│        │               │                                        │
-│        ▼               ▼                                        │
-│  Market Table     Top Movers / Momentum                         │
+│        ├──────────────────────┐                                 │
+│        │                      │                                 │
+│        ▼                      ▼                                 │
+│  Market Table          Top Movers / Momentum                    │
 │                                                                 │
 │  Memoized rows + symbol-level subscriptions                     │
 └─────────────────────────────────────────────────────────────────┘
@@ -127,7 +136,7 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
 * TypeScript
 * Redux Toolkit
 * WebSocket API
-* CSS
+* Tailwind CSS
 
 ## Backend
 
@@ -149,13 +158,12 @@ The frontend consumes the stream over WebSocket and updates the UI using **50ms 
 
 ```text
 brightstar-trading-dashboard/
-│
+
 ├── apps/
-│   │
 │   ├── server/
 │   │   ├── src/
 │   │   │   ├── processor/
-│   │   │   │   ├── calculations.ts
+│   │   │   │   ├── calculation.ts
 │   │   │   │   ├── MarketProcessor.ts
 │   │   │   │   ├── types.ts
 │   │   │   │   └── validation.ts
@@ -174,14 +182,13 @@ brightstar-trading-dashboard/
 │   │
 │   └── web/
 │       ├── app/
-│       │
+│       ├── components/
 │       ├── features/
 │       │   └── market/
-│       │       ├── components/
-│       │       ├── marketConfig.ts
 │       │       ├── marketSelectors.ts
 │       │       ├── marketSlice.ts
 │       │       ├── marketWebSocket.ts
+│       │       ├── useMarketStale.ts
 │       │       └── useMarketStream.ts
 │       │
 │       ├── app/
@@ -224,7 +231,7 @@ npm --version
 
 # Installation
 
-Clone the repository and install dependencies from the root directory:
+Install dependencies from the repository root:
 
 ```bash
 npm install
@@ -236,25 +243,29 @@ The project uses **npm workspaces**.
 
 # Environment Variables
 
-Create a `.env` file if environment-specific configuration is required.
+The application works with local defaults, but environment variables can be used for configuration.
 
 Example:
 
 ```env
 SERVER_PORT=4000
+WEB_ORIGIN=http://localhost:3000
+
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_WS_URL=ws://localhost:4000/stream
 ```
 
-The frontend defaults to:
+Frontend defaults:
 
 ```text
-REST:
+REST API:
 http://localhost:4000
 
 WebSocket:
 ws://localhost:4000/stream
 ```
+
+The backend CORS configuration uses `WEB_ORIGIN` to explicitly control the allowed frontend origin.
 
 ---
 
@@ -329,7 +340,7 @@ npm run start -w @brightstar/web
 
 # Market Simulator
 
-The backend does not depend on a real stock market API.
+The backend does not depend on an external stock market API.
 
 Instead, it uses a deterministic market simulator.
 
@@ -345,13 +356,20 @@ Each instrument has its own configuration:
 }
 ```
 
-The simulator generates a new price approximately every 100ms.
+All twelve configured instruments currently generate a tick approximately every 100ms.
+
+This results in approximately:
+
+```text
+12 instruments × 10 ticks/sec
+= ~120 ticks/sec
+```
 
 ---
 
 # Price Simulation
 
-The simulator uses a simplified geometric Brownian motion style model.
+The simulator uses a simplified geometric Brownian motion-style model.
 
 The basic price movement is:
 
@@ -370,7 +388,7 @@ A deterministic seeded pseudo-random number generator is used so that simulation
 
 A standard normal distribution is generated using the Box-Muller transform.
 
-The generated price is also bounded by the instrument's configured maximum movement.
+The generated price is bounded by the instrument's configured maximum movement.
 
 This keeps the simulator realistic enough for UI and architecture testing without depending on an external market data provider.
 
@@ -378,7 +396,11 @@ This keeps the simulator realistic enough for UI and architecture testing withou
 
 # Market Event Model
 
-The main streaming event is:
+The simulator produces raw `MarketTick` data.
+
+The processor converts each accepted tick into the latest `InstrumentState`.
+
+The processed state is then broadcast using `MarketStateEvent`.
 
 ```ts
 interface MarketStateEvent {
@@ -421,13 +443,13 @@ Example:
     "sequence": 125,
     "ltp": 25192.45,
     "previousLtp": 25190.12,
-    "bid": 25192.40,
-    "ask": 25192.50,
+    "bid": 25192.4,
+    "ask": 25192.5,
     "bidQuantity": 120,
     "askQuantity": 95,
     "tradedQuantity": 48200,
-    "change": 11.95,
-    "changePercent": 0.0475,
+    "change": 2.33,
+    "changePercent": 0.00925,
     "rolling10Return": 0.18,
     "rollingAveragePrice": 25189.74,
     "lastUpdated": 1726500000000,
@@ -476,9 +498,9 @@ Broadcast via WebSocket
 
 # In-Flight Calculations
 
-The backend calculates derived values before sending data to the frontend.
+Derived market values are calculated on the backend before data reaches the frontend.
 
-This avoids repeatedly calculating market metrics inside React render cycles.
+This keeps business calculations outside React render cycles.
 
 ## Change
 
@@ -497,12 +519,12 @@ changePercent =
 
 ```text
 rolling10Return =
-  ((latestPrice - price10TicksAgo) / price10TicksAgo) × 100
+  ((latestPrice - oldestPriceInWindow) / oldestPriceInWindow) × 100
 ```
 
 ## Rolling Average
 
-The processor maintains a maximum of the latest 10 prices:
+The processor maintains a maximum of the latest ten prices:
 
 ```text
 rollingAveragePrice =
@@ -529,12 +551,7 @@ sequence 104
 ...
 ```
 
-Sequence numbers provide protection against:
-
-* Duplicate events
-* Out-of-order events
-* Replayed events
-* Delayed network messages
+Sequence numbers allow the system to reject duplicate, replayed, or older events that arrive after a newer event for the same instrument.
 
 The backend rejects an event when:
 
@@ -542,9 +559,9 @@ The backend rejects an event when:
 incomingSequence <= lastProcessedSequence
 ```
 
-The frontend also performs the same protection before updating Redux state.
+The frontend also performs sequence checks before updating Redux state.
 
-This provides ordering protection on both sides of the system.
+This provides ordering protection at both processing and presentation boundaries.
 
 ---
 
@@ -558,13 +575,13 @@ An event is rejected when:
 incomingTimestamp < lastProcessedTimestamp
 ```
 
-This provides an additional safeguard against stale events arriving after newer market data.
+This provides an additional safeguard against older events arriving after newer market data.
 
 ---
 
 # Validation
 
-The backend validates incoming/generated market events before processing them.
+The backend validates market events before processing them.
 
 Validation includes:
 
@@ -597,18 +614,20 @@ The state is normalized by instrument symbol:
     RELIANCE: {...},
     HDFCBANK: {...},
     INFY: {...},
-    TCS: {...}
+    TCS: {...},
+    ICICIBANK: {...},
+    SBIN: {...},
+    BHARTIARTL: {...},
+    ITC: {...},
+    LT: {...},
+    AXISBANK: {...}
   },
-
   connectionStatus: "CONNECTED",
-
   lastEventAt: 1726500000000
 }
 ```
 
-This makes instrument updates O(1) by symbol.
-
-For example:
+This provides O(1) lookup by symbol:
 
 ```ts
 state.bySymbol[instrument.symbol] = instrument;
@@ -620,7 +639,7 @@ state.bySymbol[instrument.symbol] = instrument;
 
 The stream continuously updates individual instruments.
 
-Instead of replacing an entire array:
+Instead of replacing and searching through an entire array:
 
 ```ts
 [
@@ -649,15 +668,13 @@ This provides:
 
 # WebSocket Streaming
 
-The backend exposes:
+The backend exposes a WebSocket endpoint:
 
 ```text
-GET /stream
+ws://localhost:4000/stream
 ```
 
-using WebSocket.
-
-The frontend establishes a persistent connection:
+The frontend establishes a persistent connection.
 
 ```text
 Browser
@@ -671,7 +688,13 @@ Server
    ├── RELIANCE
    ├── HDFCBANK
    ├── INFY
-   └── TCS
+   ├── TCS
+   ├── ICICIBANK
+   ├── SBIN
+   ├── BHARTIARTL
+   ├── ITC
+   ├── LT
+   └── AXISBANK
 ```
 
 Each accepted market update is broadcast to connected clients.
@@ -680,7 +703,7 @@ Each accepted market update is broadcast to connected clients.
 
 # Frontend Batching
 
-The backend can generate approximately 60 events per second.
+The backend produces approximately 120 events per second.
 
 Dispatching every event independently into Redux would create unnecessary update pressure.
 
@@ -705,7 +728,7 @@ Redux
 React
 ```
 
-If multiple events for the same symbol arrive during the same batch window, only the latest event is retained.
+If multiple events for the same symbol arrive during one batching window, only the latest event is retained.
 
 For example:
 
@@ -722,15 +745,15 @@ Instead of dispatching four updates, the batch can dispatch:
 NIFTY seq 104
 ```
 
-This reduces unnecessary Redux and React work while preserving the latest state.
+This reduces unnecessary Redux and React work while preserving the latest available state.
 
 ---
 
 # React Rendering Strategy
 
-The market table is designed so that an update to one instrument does not require every row to perform the same subscription work.
+The market table is designed so that updates to individual instruments do not require every row to perform the same subscription work.
 
-Each market row is memoized:
+The table contains memoized rows:
 
 ```text
 MarketTable
@@ -740,12 +763,18 @@ MarketTable
    ├── Memoized MarketRow(RELIANCE)
    ├── Memoized MarketRow(HDFCBANK)
    ├── Memoized MarketRow(INFY)
-   └── Memoized MarketRow(TCS)
+   ├── Memoized MarketRow(TCS)
+   ├── Memoized MarketRow(ICICIBANK)
+   ├── Memoized MarketRow(SBIN)
+   ├── Memoized MarketRow(BHARTIARTL)
+   ├── Memoized MarketRow(ITC)
+   ├── Memoized MarketRow(LT)
+   └── Memoized MarketRow(AXISBANK)
 ```
 
 Each row selects its own instrument state using its symbol.
 
-This reduces unnecessary rerenders as market updates arrive continuously.
+This reduces unnecessary rerendering as market updates arrive continuously.
 
 ---
 
@@ -753,13 +782,14 @@ This reduces unnecessary rerenders as market updates arrive continuously.
 
 Stable selectors are used for:
 
-* Individual instrument
+* Individual instruments
 * All instruments
+* Instrument symbols
 * Top gainers
 * Top losers
 * Momentum leaders
 
-Top movers are calculated using memoized selectors rather than repeatedly sorting data inside render functions.
+Top movers are calculated through memoized selectors rather than repeatedly sorting data inside React render functions.
 
 ---
 
@@ -770,11 +800,11 @@ The dashboard exposes momentum information using the rolling 10-tick return.
 Example:
 
 ```text
-Symbol       Momentum
----------------------
-RELIANCE     +0.42%
-NIFTY        +0.31%
-INFY         -0.08%
+Symbol          Momentum
+------------------------
+RELIANCE        +0.42%
+NIFTY           +0.31%
+INFY            -0.08%
 ```
 
 The top-mover selectors derive:
@@ -787,21 +817,21 @@ The top-mover selectors derive:
 
 # Change Visualization
 
-The UI follows the requested change thresholds:
+The UI uses the following change thresholds:
 
 ```text
-> +1%             Strong Positive
+> +1%              Strong Positive
 
-+0.25% to +1%     Positive
++0.25% to +1%      Positive
 
--0.25% to +0.25%  Neutral
+-0.25% to +0.25%   Neutral
 
--1% to -0.25%     Negative
+-1% to -0.25%      Negative
 
-< -1%             Strong Negative
+< -1%              Strong Negative
 ```
 
-These thresholds are applied consistently to change/momentum presentation.
+These thresholds are used consistently for change and momentum presentation.
 
 ---
 
@@ -813,7 +843,9 @@ Supported connection states include:
 
 ```text
 CONNECTED
+
 DISCONNECTED
+
 RECONNECTING
 ```
 
@@ -824,6 +856,19 @@ STALE DATA
 ```
 
 when the connection exists but market updates have not arrived within the configured stale threshold.
+
+This means connection state and data freshness are treated as separate concerns.
+
+For example:
+
+```text
+WebSocket: CONNECTED
+Market updates: not received for > threshold
+
+Result:
+
+STALE DATA
+```
 
 ---
 
@@ -886,7 +931,7 @@ Therefore, an older snapshot cannot overwrite a newer live WebSocket event that 
 
 The frontend monitors the timestamp of the latest received market event.
 
-The stale threshold is currently:
+The current stale threshold is:
 
 ```text
 1000ms
@@ -906,17 +951,7 @@ STALE DATA
 
 This is separate from the WebSocket connection state.
 
-For example:
-
-```text
-WebSocket: CONNECTED
-Market updates: not received for > threshold
-
-Result:
-STALE DATA
-```
-
-This distinction is important because an open TCP/WebSocket connection does not necessarily mean that fresh market data is flowing.
+An open WebSocket connection does not necessarily guarantee that fresh market data is flowing, so the application monitors both connection health and data freshness.
 
 ---
 
@@ -1000,13 +1035,13 @@ The snapshot is used for reconnect recovery.
 ws://localhost:4000/stream
 ```
 
-## Event
+## Event Type
 
 ```text
 MARKET_TICK
 ```
 
-Example structure:
+Example:
 
 ```json
 {
@@ -1017,13 +1052,13 @@ Example structure:
     "sequence": 125,
     "ltp": 25192.45,
     "previousLtp": 25190.12,
-    "bid": 25192.40,
-    "ask": 25192.50,
+    "bid": 25192.4,
+    "ask": 25192.5,
     "bidQuantity": 120,
     "askQuantity": 95,
     "tradedQuantity": 48200,
-    "change": 11.95,
-    "changePercent": 0.0475,
+    "change": 2.33,
+    "changePercent": 0.00925,
     "rolling10Return": 0.18,
     "rollingAveragePrice": 25189.74,
     "lastUpdated": 1726500000000,
@@ -1050,7 +1085,7 @@ The backend validates market events before processing.
 
 Events containing an unknown symbol are rejected.
 
-This prevents unexpected data from entering the market state.
+This prevents unexpected data from entering market state.
 
 ---
 
@@ -1066,6 +1101,7 @@ Current: sequence 105
 Incoming: sequence 105
 
 Result:
+
 Ignored
 ```
 
@@ -1113,7 +1149,7 @@ GET /snapshot
 Restore latest state
 ```
 
-The user does not need to refresh the page.
+The frontend does not require a page refresh after backend recovery.
 
 ---
 
@@ -1128,7 +1164,7 @@ The implementation uses several techniques.
 Updates are grouped within a 50ms window.
 
 ```text
-60 events/sec
+~120 events/sec
       ↓
 50ms batching
       ↓
@@ -1145,7 +1181,7 @@ The pending batch uses:
 Map<InstrumentSymbol, InstrumentState>
 ```
 
-Only the latest event for a symbol is retained during the batch.
+Only the latest event for each symbol is retained during the batching window.
 
 ---
 
@@ -1153,15 +1189,15 @@ Only the latest event for a symbol is retained during the batch.
 
 Market state is stored by symbol.
 
-This avoids searching through arrays for every update.
+This provides O(1) lookup and avoids repeatedly searching through arrays for individual updates.
 
 ---
 
-## 4. Row-Level Subscriptions
+## 4. Symbol-Level Subscriptions
 
-Each market row subscribes to its own instrument.
+Each market row selects its own instrument state.
 
-Therefore, an update to:
+An update to:
 
 ```text
 NIFTY
@@ -1175,13 +1211,13 @@ does not require unrelated rows to recompute their selected state.
 
 Market rows use `React.memo`.
 
-This prevents rerendering when their relevant props/state have not changed.
+This prevents rerendering when their relevant state has not changed.
 
 ---
 
 ## 6. Memoized Selectors
 
-Derived values such as top movers are calculated through memoized selectors.
+Derived values such as top movers are calculated through memoized Redux selectors.
 
 ---
 
@@ -1189,7 +1225,7 @@ Derived values such as top movers are calculated through memoized selectors.
 
 Derived market metrics are calculated before data reaches React.
 
-This keeps repeated calculations out of render logic.
+This keeps repeated business calculations out of render logic.
 
 ---
 
@@ -1198,16 +1234,16 @@ This keeps repeated calculations out of render logic.
 For a single market event:
 
 ```text
-Symbol lookup: O(1)
+Symbol lookup:              O(1)
 
-State update: O(1)
+State update:               O(1)
 
-Rolling history update: O(1) amortized
+Rolling history update:     O(1) amortized
 
-Rolling average: O(10)
+Rolling average:            O(10)
 ```
 
-Because the rolling window is limited to 10 ticks, the calculation remains effectively constant for the current design.
+Because the rolling window is limited to ten ticks, the rolling calculations remain effectively constant for the current design.
 
 Top movers require sorting the instrument collection.
 
@@ -1217,9 +1253,9 @@ With `N` instruments:
 O(N log N)
 ```
 
-For the current six instruments this is negligible.
+For the current twelve instruments this is negligible.
 
-At larger scale, top movers can be optimized using heaps, partitioning, or server-side aggregation.
+At larger scale, top movers could be optimized using heaps, partitioning, or server-side aggregation.
 
 ---
 
@@ -1233,30 +1269,49 @@ A possible architecture:
 
 ```text
 Market Feed
+
     │
+
     ▼
+
 Kafka / Event Stream
+
     │
+
     ├── Partition 1
     ├── Partition 2
     ├── Partition 3
     └── ...
+
     │
+
     ▼
+
 Market Processing Workers
+
     │
+
     ├── Validation
     ├── Ordering
     ├── Rolling calculations
     └── Latest state
+
     │
+
     ▼
+
 Distributed State Store
+
     │
+
     ▼
+
 WebSocket Gateway
+
     │
+
     ▼
+
 Clients
 ```
 
@@ -1264,7 +1319,7 @@ Clients
 
 # Scaling to 50,000 Ticks/sec
 
-At 50,000 ticks/sec, a single Node.js process should not be responsible for every stage of ingestion and fan-out.
+At 50,000 ticks/sec, a single Node.js process should not be responsible for every stage of ingestion, processing, and fan-out.
 
 I would introduce:
 
@@ -1301,17 +1356,17 @@ This allows WebSocket gateways to scale horizontally based on the number of conn
 For five backend instances:
 
 ```text
-                  Load Balancer
-                       │
-          ┌────────────┼────────────┐
-          │            │            │
-       Server 1     Server 2     Server 3
-          │            │            │
-          └────────────┼────────────┘
-                       │
-                 Shared Stream
-                       │
-                  Shared State
+                    Load Balancer
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+       Server 1       Server 2       Server 3
+          │              │              │
+          └──────────────┼──────────────┘
+                         │
+                  Shared Stream
+                         │
+                    Shared State
 ```
 
 A shared event stream prevents each server from independently generating or processing conflicting market state.
@@ -1328,7 +1383,9 @@ For a given instrument:
 
 ```text
 NIFTY sequence 100
+
 NIFTY sequence 101
+
 NIFTY sequence 102
 ```
 
@@ -1381,19 +1438,19 @@ Possible mitigations include:
 
 # Why Kafka Would Be Added Later
 
-Kafka is intentionally not required for this local implementation.
+Kafka is intentionally not required for the local implementation.
 
-The assignment's simulator only produces approximately:
+The current simulator produces approximately:
 
 ```text
-60 ticks/sec
+120 ticks/sec
 ```
 
 A single Node.js process can comfortably handle this workload.
 
 Introducing Kafka locally would add operational complexity without providing meaningful benefits for the assignment's current scale.
 
-At production scale, however, partitioned streaming becomes useful for:
+At production scale, partitioned streaming becomes useful for:
 
 * Horizontal processing
 * Durable event delivery
@@ -1495,7 +1552,7 @@ packages/shared
 
 This avoids duplicating event contracts between the backend and frontend.
 
-The project is configured with strict TypeScript checking.
+The project uses strict TypeScript checking.
 
 Run:
 
@@ -1642,7 +1699,7 @@ Introduces a small amount of display latency.
 
 ### Tradeoff
 
-For a visual monitoring dashboard, reducing unnecessary renders is generally more valuable than rendering every intermediate tick.
+For a visual monitoring dashboard, reducing unnecessary renders is generally more important than rendering every intermediate tick.
 
 ---
 
@@ -1655,7 +1712,7 @@ For a production deployment, I would add:
 * Authentication
 * Authorization
 * TLS/WSS
-* Origin validation
+* Strict origin validation
 * Rate limiting
 * Connection limits
 * Input validation
@@ -1665,6 +1722,8 @@ For a production deployment, I would add:
 
 The WebSocket layer should also enforce maximum message sizes and connection policies.
 
+The current backend explicitly configures its allowed frontend origin through `WEB_ORIGIN` rather than enabling unrestricted CORS.
+
 ---
 
 # Observability
@@ -1673,14 +1732,23 @@ For production deployment, useful metrics would include:
 
 ```text
 ticks_received_total
+
 ticks_rejected_total
+
 ticks_out_of_order_total
+
 websocket_connections
+
 websocket_reconnects
+
 processing_latency_ms
+
 snapshot_latency_ms
+
 consumer_lag
+
 events_per_second
+
 stale_instruments
 ```
 
@@ -1688,10 +1756,15 @@ Structured logs should include:
 
 ```text
 symbol
+
 sequence
+
 timestamp
+
 event type
+
 processing result
+
 error reason
 ```
 
@@ -1715,7 +1788,7 @@ Possible extensions include:
 * Server-side aggregation
 * WebSocket authentication
 * Persistent market history
-* Worker-thread based calculations
+* Worker-thread-based calculations
 * Virtualized instrument tables
 * Performance telemetry
 * OpenTelemetry tracing
@@ -1762,11 +1835,11 @@ The complete flow is:
 
 # API Summary
 
-| Endpoint       | Method    | Purpose                       |
+| Endpoint       | Protocol  | Purpose                       |
 | -------------- | --------- | ----------------------------- |
-| `/health`      | GET       | Backend health                |
-| `/instruments` | GET       | Instrument configuration      |
-| `/snapshot`    | GET       | Latest processed market state |
+| `/health`      | HTTP GET  | Backend health                |
+| `/instruments` | HTTP GET  | Instrument configuration      |
+| `/snapshot`    | HTTP GET  | Latest processed market state |
 | `/stream`      | WebSocket | Real-time market events       |
 
 ---
@@ -1776,11 +1849,16 @@ The complete flow is:
 Current local configuration:
 
 ```text
-Instruments:       6
+Instruments:       12
+
 Tick interval:     100ms
+
 Ticks/instrument:  10/sec
-Total ticks:       ~60/sec
+
+Total ticks:       ~120/sec
+
 Frontend batch:    50ms
+
 Rolling window:    10 ticks
 ```
 
@@ -1808,7 +1886,9 @@ Expected result:
 
 ```text
 ✓ TypeScript passes
+
 ✓ Backend tests pass
+
 ✓ Production build passes
 ```
 
@@ -1816,16 +1896,31 @@ Manual checks:
 
 ```text
 ✓ Dashboard loads
+
+✓ 12 instruments are displayed
+
 ✓ Market prices update continuously
+
+✓ Approximately 120 ticks/sec are generated
+
 ✓ Change values update
+
 ✓ Momentum updates
+
 ✓ Top movers update
+
 ✓ WebSocket shows CONNECTED
+
 ✓ Backend shutdown shows DISCONNECTED
+
 ✓ Reconnection shows RECONNECTING
+
 ✓ Backend restart reconnects automatically
+
 ✓ Snapshot restores latest state
+
 ✓ Stale data is detected
+
 ✓ No page refresh is required after backend recovery
 ```
 
@@ -1846,3 +1941,5 @@ This implementation focuses on the core challenges of a real-time market dashboa
 * Clear scalability boundaries
 
 The local implementation intentionally avoids unnecessary infrastructure while keeping the architecture extensible toward a production system capable of handling substantially higher event volumes and multiple backend instances.
+
+The design prioritizes correctness and predictable state transitions at the ingestion and processing layers, while using frontend batching and selective subscriptions to keep rendering work controlled.
