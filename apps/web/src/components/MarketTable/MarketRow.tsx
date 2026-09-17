@@ -42,7 +42,7 @@ function getChangeClass(
 
 function MarketRowComponent({
   symbol,
-}: MarketRowProps) {
+}: Readonly<MarketRowProps>) {
   const instrument =
     useAppSelector(
       selectInstrumentBySymbol(symbol)

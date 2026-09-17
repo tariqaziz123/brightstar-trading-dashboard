@@ -24,7 +24,7 @@ const statusStyles: Record<
 export function ConnectionStatus({
   status,
   isStale,
-}: ConnectionStatusProps) {
+}: Readonly<ConnectionStatusProps>) {
   const displayStatus =
     status === "CONNECTED" && isStale
       ? "STALE DATA"

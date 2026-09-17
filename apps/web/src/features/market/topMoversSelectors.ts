@@ -6,10 +6,6 @@ import type {
   InstrumentState,
 } from "@brightstar/shared";
 
-import type {
-  RootState,
-} from "../../app/store";
-
 import {
   selectAllInstruments,
 } from "./marketSelectors";

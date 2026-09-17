@@ -13,7 +13,6 @@ import {
   calculateRollingReturn,
 } from "./calculation";
 import type {
-  InstrumentRuntime,
   RuntimeState,
 } from "./types";
 

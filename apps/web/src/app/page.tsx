@@ -77,9 +77,9 @@ export default function HomePage() {
                 isStale={isMarketStale}
               />
 
-              <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-xs text-slate-400">
-                <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Streaming Market Data
+              <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-xs text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>Streaming Market Data</span>
               </div>
             </div>
           </div>
@@ -191,10 +191,10 @@ function MetricCard({
   detail,
   status = false,
 }: {
-  label: string;
-  value: string;
-  detail: string;
-  status?: boolean;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+  readonly status?: boolean;
 }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">

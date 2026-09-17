@@ -10,7 +10,7 @@ interface StoreProviderProps {
 
 export function StoreProvider({
   children,
-}: StoreProviderProps) {
+}: Readonly<StoreProviderProps>) {
   return (
     <Provider store={store}>
       {children}

@@ -12,7 +12,7 @@ type PriceChartProps = {
 
 const MAX_POINTS = 100;
 
-export function PriceChart({ instruments }: PriceChartProps) {
+export function PriceChart({ instruments }: Readonly<PriceChartProps>) {
   const [selectedSymbol, setSelectedSymbol] =
     useState<InstrumentSymbol>("NIFTY");
 
@@ -29,7 +29,7 @@ export function PriceChart({ instruments }: PriceChartProps) {
 
     setHistory((previousHistory) => {
       const lastPrice =
-        previousHistory[previousHistory.length - 1];
+        previousHistory.at(-1);
 
       if (lastPrice === selectedInstrument.ltp) {
         return previousHistory;
@@ -77,13 +77,13 @@ export function PriceChart({ instruments }: PriceChartProps) {
       const x =
         left +
         (index / Math.max(history.length - 1, 1)) *
-          (width - left - right);
+        (width - left - right);
 
       const y =
         height -
         bottom -
         ((price - minimum) / range) *
-          (height - top - bottom);
+        (height - top - bottom);
 
       return {
         x,
@@ -96,7 +96,7 @@ export function PriceChart({ instruments }: PriceChartProps) {
       .join(" ");
 
     const firstPoint = points[0];
-    const lastPoint = points[points.length - 1];
+    const lastPoint = points.at(-1)!;
 
     const area = [
       `${firstPoint.x},${height - bottom}`,
@@ -115,7 +115,7 @@ export function PriceChart({ instruments }: PriceChartProps) {
   }, [history]);
 
   const firstPrice = history[0] ?? 0;
-  const latestPrice = history[history.length - 1] ?? 0;
+  const latestPrice = history.at(-1) ?? 0;
 
   const windowChange =
     firstPrice > 0
@@ -133,7 +133,7 @@ export function PriceChart({ instruments }: PriceChartProps) {
       <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
-          Waiting for market data...
+          <span>Waiting for market data...</span>
         </div>
       </section>
     );
@@ -152,7 +152,7 @@ export function PriceChart({ instruments }: PriceChartProps) {
 
               <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Live
+                <span>Live</span>
               </span>
             </div>
 
@@ -166,11 +166,10 @@ export function PriceChart({ instruments }: PriceChartProps) {
               </span>
 
               <span
-                className={`font-mono text-sm font-semibold ${
-                  selectedInstrument.changePercent >= 0
+                className={`font-mono text-sm font-semibold ${selectedInstrument.changePercent >= 0
                     ? "text-emerald-400"
                     : "text-red-400"
-                }`}
+                  }`}
               >
                 {selectedInstrument.changePercent >= 0
                   ? "+"
@@ -446,14 +445,24 @@ export function PriceChart({ instruments }: PriceChartProps) {
   );
 }
 
+function getValueClass(positive?: boolean): string {
+  if (positive === undefined) {
+    return "text-slate-300";
+  }
+
+  return positive
+    ? "text-emerald-400"
+    : "text-red-400";
+}
+
 function MarketStat({
   label,
   value,
   positive,
 }: {
-  label: string;
-  value: string;
-  positive?: boolean;
+  readonly label: string;
+  readonly value: string;
+  readonly positive?: boolean;
 }) {
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
@@ -462,13 +471,9 @@ function MarketStat({
       </p>
 
       <p
-        className={`mt-1 truncate font-mono text-xs font-semibold ${
-          positive === undefined
-            ? "text-slate-300"
-            : positive
-              ? "text-emerald-400"
-              : "text-red-400"
-        }`}
+        className={`mt-1 truncate font-mono text-xs font-semibold ${getValueClass(
+          positive
+        )}`}
       >
         {value}
       </p>
@@ -481,9 +486,9 @@ function ChartStat({
   value,
   positive,
 }: {
-  label: string;
-  value: string;
-  positive?: boolean;
+  readonly label: string;
+  readonly value: string;
+  readonly positive?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5">
@@ -492,13 +497,9 @@ function ChartStat({
       </p>
 
       <p
-        className={`mt-1 truncate font-mono text-sm font-semibold ${
-          positive === undefined
-            ? "text-slate-300"
-            : positive
-              ? "text-emerald-400"
-              : "text-red-400"
-        }`}
+        className={`mt-1 truncate font-mono text-xs font-semibold ${getValueClass(
+          positive
+        )}`}
       >
         {value}
       </p>

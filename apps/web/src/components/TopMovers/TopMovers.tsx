@@ -14,7 +14,7 @@ export function TopMovers({
   instruments,
   metric,
   suffix = "%",
-}: TopMoversProps) {
+}: Readonly<TopMoversProps>) {
   return (
     <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -30,7 +30,7 @@ export function TopMovers({
 
         <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          Live
+          <span>Live</span>
         </span>
       </div>
 

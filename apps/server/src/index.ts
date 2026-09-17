@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { createServer } from "http";
+import { createServer } from "node:http";
 
 import {
   instruments
@@ -16,7 +16,15 @@ const PORT = Number(
 
 const app = express();
 
-app.use(cors());
+const allowedOrigin =
+  process.env.WEB_ORIGIN ?? "http://localhost:3000";
+
+app.use(
+  cors({
+    origin: allowedOrigin,
+  })
+);
+
 app.use(express.json());
 
 const httpServer = createServer(app);

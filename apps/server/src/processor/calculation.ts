@@ -28,8 +28,7 @@ export function calculateRollingReturn(
   }
 
   const firstPrice = prices[0];
-  const latestPrice =
-    prices[prices.length - 1];
+  const latestPrice = prices.at(-1)!;
 
   if (firstPrice === 0) {
     return 0;

@@ -144,7 +144,7 @@ export class MarketSimulator {
   private seedFor(symbol: string): number {
     return [...symbol].reduce(
       (seed, char) =>
-        seed * 31 + char.charCodeAt(0),
+        seed * 31 + char.codePointAt(0)!,
       7
     );
   }
