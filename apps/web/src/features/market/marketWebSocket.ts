@@ -1,5 +1,6 @@
 import type {
   MarketStateEvent,
+  InstrumentState,
 } from "@brightstar/shared";
 
 import {
@@ -32,7 +33,7 @@ export class MarketWebSocketClient {
     private readonly onTick: (
       event: MarketStateEvent
     ) => void
-  ) { }
+  ) {}
 
   connect(): void {
     this.stopped = false;
@@ -48,7 +49,6 @@ export class MarketWebSocketClient {
       setConnectionStatus("RECONNECTING")
     );
 
-    void this.fetchSnapshot();
     this.socket = new WebSocket(WS_URL);
 
     this.socket.onopen = () => {
@@ -59,10 +59,11 @@ export class MarketWebSocketClient {
       this.reconnectDelay =
         INITIAL_RECONNECT_DELAY;
 
-      void this.fetchSnapshot();
       this.dispatch(
         setConnectionStatus("CONNECTED")
       );
+
+      void this.fetchSnapshot();
     };
 
     this.socket.onmessage = (message) => {
@@ -175,7 +176,9 @@ export class MarketWebSocketClient {
       return false;
     }
 
-    if (typeof event.timestamp !== "number") {
+    if (
+      typeof event.timestamp !== "number"
+    ) {
       return false;
     }
 
@@ -202,47 +205,57 @@ export class MarketWebSocketClient {
       typeof payload.change === "number" &&
       typeof payload.changePercent === "number" &&
       typeof payload.rolling10Return === "number" &&
-      typeof payload.rollingAveragePrice === "number" &&
+      typeof payload.rollingAveragePrice ===
+        "number" &&
       typeof payload.lastUpdated === "number" &&
       typeof payload.status === "string"
     );
   }
 
   private async fetchSnapshot(): Promise<void> {
-  try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL ??
-      "http://localhost:4000";
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ??
+        "http://localhost:4000";
 
-    const response = await fetch(
-      `${baseUrl}/snapshot`
-    );
+      const response = await fetch(
+        `${baseUrl}/snapshot`
+      );
 
-    if (!response.ok) {
-      throw new Error(
-        `Snapshot request failed: ${response.status}`
+      if (!response.ok) {
+        throw new Error(
+          `Snapshot request failed: ${response.status}`
+        );
+      }
+
+      const data: unknown =
+        await response.json();
+
+      if (
+        typeof data !== "object" ||
+        data === null ||
+        !(
+          "instruments" in data
+        ) ||
+        !Array.isArray(
+          data.instruments
+        )
+      ) {
+        throw new Error(
+          "Invalid snapshot response"
+        );
+      }
+
+      this.dispatch(
+        upsertInstruments(
+          data.instruments as InstrumentState[]
+        )
+      );
+    } catch (error) {
+      console.warn(
+        "[WebSocket] Snapshot recovery failed",
+        error
       );
     }
-
-    const data = await response.json();
-
-    if (
-      !data ||
-      !Array.isArray(data.instruments)
-    ) {
-      throw new Error(
-        "Invalid snapshot response"
-      );
-    }
-
-    this.dispatch(
-      upsertInstruments(data.instruments)
-    );
-  } catch (error) {
-    console.warn(
-      "[WebSocket] Snapshot recovery failed",
-      error
-    );
   }
-}
 }
