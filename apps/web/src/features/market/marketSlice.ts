@@ -7,19 +7,25 @@ import type {
   ConnectionStatus,
   InstrumentState,
   InstrumentSymbol,
+  MarketStateEvent,
 } from "@brightstar/shared";
 
 interface MarketStoreState {
   bySymbol: Partial<
     Record<InstrumentSymbol, InstrumentState>
   >;
+
   connectionStatus: ConnectionStatus;
+
   lastEventAt: number | null;
 }
 
 const initialState: MarketStoreState = {
   bySymbol: {},
-  connectionStatus: "DISCONNECTED",
+
+  connectionStatus:
+    "DISCONNECTED",
+
   lastEventAt: null,
 };
 
@@ -31,15 +37,34 @@ const marketSlice = createSlice({
   reducers: {
     upsertInstrument(
       state,
-      action: PayloadAction<InstrumentState>
+      action: PayloadAction<
+        MarketStateEvent["payload"]
+      >
     ) {
-      const instrument = action.payload;
+      const instrument =
+        action.payload;
 
-      state.bySymbol[instrument.symbol] =
-        instrument;
+      const current =
+        state.bySymbol[
+          instrument.symbol
+        ];
 
-      state.lastEventAt =
-        instrument.lastUpdated;
+      if (
+        current &&
+        instrument.sequence <=
+          current.sequence
+      ) {
+        return;
+      }
+
+      state.bySymbol[
+        instrument.symbol
+      ] = instrument;
+
+      state.lastEventAt = Math.max(
+        state.lastEventAt ?? 0,
+        instrument.lastUpdated
+      );
     },
 
     setConnectionStatus(
@@ -52,43 +77,83 @@ const marketSlice = createSlice({
 
     setSnapshot(
       state,
-      action: PayloadAction<InstrumentState[]>
+      action: PayloadAction<
+        InstrumentState[]
+      >
     ) {
-      for (const instrument of action.payload) {
-        state.bySymbol[instrument.symbol] =
-          instrument;
+      for (const instrument of
+        action.payload) {
+        const current =
+          state.bySymbol[
+            instrument.symbol
+          ];
+
+        if (
+          current &&
+          instrument.sequence <=
+            current.sequence
+        ) {
+          continue;
+        }
+
+        state.bySymbol[
+          instrument.symbol
+        ] = instrument;
       }
 
-      state.lastEventAt =
+      if (
         action.payload.length > 0
-          ? Math.max(
-              ...action.payload.map(
-                (instrument) =>
-                  instrument.lastUpdated
-              )
+      ) {
+        state.lastEventAt =
+          Math.max(
+            state.lastEventAt ?? 0,
+            ...action.payload.map(
+              (instrument) =>
+                instrument.lastUpdated
             )
-          : null;
+          );
+      }
     },
 
     upsertInstruments(
-  state,
-  action: PayloadAction<InstrumentState[]>
-) {
-  for (const instrument of action.payload) {
-    state.bySymbol[instrument.symbol] =
-      instrument;
-  }
+      state,
+      action: PayloadAction<
+        MarketStateEvent["payload"][]
+      >
+    ) {
+      for (const instrument of
+        action.payload) {
+        const current =
+          state.bySymbol[
+            instrument.symbol
+          ];
 
-  state.lastEventAt =
-    action.payload.length > 0
-      ? Math.max(
-          ...action.payload.map(
-            (instrument) =>
-              instrument.lastUpdated
-          )
-        )
-      : state.lastEventAt;
-},
+        if (
+          current &&
+          instrument.sequence <=
+            current.sequence
+        ) {
+          continue;
+        }
+
+        state.bySymbol[
+          instrument.symbol
+        ] = instrument;
+      }
+
+      if (
+        action.payload.length > 0
+      ) {
+        state.lastEventAt =
+          Math.max(
+            state.lastEventAt ?? 0,
+            ...action.payload.map(
+              (instrument) =>
+                instrument.lastUpdated
+            )
+          );
+      }
+    },
 
     clearMarket(state) {
       state.bySymbol = {};

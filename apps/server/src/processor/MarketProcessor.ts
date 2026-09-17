@@ -2,44 +2,69 @@ import type {
   InstrumentConfig,
   InstrumentState,
   InstrumentSymbol,
-  MarketTick
+  MarketTick,
 } from "@brightstar/shared";
 
+import { validateTick } from "./validation";
 import {
   calculateChange,
   calculateChangePercent,
   calculateRollingAverage,
-  calculateRollingReturn
+  calculateRollingReturn,
 } from "./calculation";
-
-import {
-  validateTick
-} from "./validation";
-
 import type {
   InstrumentRuntime,
-  RuntimeState
+  RuntimeState,
 } from "./types";
 
 const ROLLING_WINDOW_SIZE = 10;
 
 export class MarketProcessor {
-  private readonly runtime: RuntimeState =
-    new Map();
+  private readonly runtime: RuntimeState;
 
   private readonly knownSymbols: Set<InstrumentSymbol>;
 
   constructor(
-    private readonly configs: InstrumentConfig[]
+    private readonly instruments: InstrumentConfig[]
   ) {
     this.knownSymbols = new Set(
-      configs.map((config) => config.symbol)
+      instruments.map(
+        (instrument) => instrument.symbol
+      )
     );
 
-    for (const config of configs) {
+    this.runtime = new Map();
+
+    for (const instrument of instruments) {
+      const initialState: InstrumentState = {
+        symbol: instrument.symbol,
+        sequence: 0,
+        ltp: instrument.seedPrice,
+        previousLtp: instrument.seedPrice,
+        bid: instrument.seedPrice,
+        ask: instrument.seedPrice,
+        bidQuantity: 0,
+        askQuantity: 0,
+        tradedQuantity: 0,
+        change: 0,
+        changePercent: 0,
+        rolling10Return: 0,
+        rollingAveragePrice:
+          instrument.seedPrice,
+        lastUpdated: 0,
+        status: "STALE",
+      };
+
       this.runtime.set(
-        config.symbol,
-        this.createInitialRuntime(config)
+        instrument.symbol,
+        {
+          state: initialState,
+          priceHistory: [
+            instrument.seedPrice,
+          ],
+          lastSequence: 0,
+          lastTimestamp: 0,
+        }
       );
     }
   }
@@ -47,10 +72,11 @@ export class MarketProcessor {
   processTick(
     tick: MarketTick
   ): InstrumentState | null {
-    const validation = validateTick(
-      tick,
-      this.knownSymbols
-    );
+    const validation =
+      validateTick(
+        tick,
+        this.knownSymbols
+      );
 
     if (!validation.valid) {
       console.warn(
@@ -64,11 +90,16 @@ export class MarketProcessor {
       this.runtime.get(tick.symbol);
 
     if (!runtime) {
+      console.warn(
+        `[Processor] Missing runtime for ${tick.symbol}`
+      );
+
       return null;
     }
 
     if (
-      tick.sequence <= runtime.lastSequence
+      tick.sequence <=
+      runtime.lastSequence
     ) {
       console.warn(
         `[Processor] Rejected ${tick.symbol}: duplicate/out-of-order sequence ${tick.sequence}`
@@ -78,10 +109,11 @@ export class MarketProcessor {
     }
 
     if (
-      tick.timestamp < runtime.lastTimestamp
+      tick.timestamp <
+      runtime.lastTimestamp
     ) {
       console.warn(
-         `[Processor] Rejected ${tick.symbol}: out-of-order timestamp`
+        `[Processor] Rejected ${tick.symbol}: out-of-order timestamp`
       );
 
       return null;
@@ -90,7 +122,9 @@ export class MarketProcessor {
     const previousLtp =
       runtime.state.ltp;
 
-    runtime.priceHistory.push(tick.ltp);
+    runtime.priceHistory.push(
+      tick.ltp
+    );
 
     if (
       runtime.priceHistory.length >
@@ -99,10 +133,11 @@ export class MarketProcessor {
       runtime.priceHistory.shift();
     }
 
-    const change = calculateChange(
-      tick.ltp,
-      previousLtp
-    );
+    const change =
+      calculateChange(
+        tick.ltp,
+        previousLtp
+      );
 
     const changePercent =
       calculateChangePercent(
@@ -122,26 +157,22 @@ export class MarketProcessor {
 
     const nextState: InstrumentState = {
       symbol: tick.symbol,
-
+      sequence: tick.sequence,
       ltp: tick.ltp,
       previousLtp,
-
       bid: tick.bid,
       ask: tick.ask,
-
       bidQuantity: tick.bidQuantity,
       askQuantity: tick.askQuantity,
-      tradedQuantity: tick.tradedQuantity,
-
+      tradedQuantity:
+        tick.tradedQuantity,
       change,
       changePercent,
-
       rolling10Return,
       rollingAveragePrice,
-
-      lastUpdated: tick.timestamp,
-
-      status: "LIVE"
+      lastUpdated:
+        tick.timestamp,
+      status: "LIVE",
     };
 
     runtime.state = nextState;
@@ -155,63 +186,25 @@ export class MarketProcessor {
 
   getState(
     symbol: InstrumentSymbol
-  ): InstrumentState | null {
-    return (
-      this.runtime.get(symbol)?.state ??
-      null
-    );
+  ): InstrumentState | undefined {
+    return this.runtime.get(symbol)?.state;
   }
 
   getAllStates(): InstrumentState[] {
-    return Array.from(
-      this.runtime.values()
-    ).map((runtime) => runtime.state);
-  }
-
-  private createInitialRuntime(
-    config: InstrumentConfig
-  ): InstrumentRuntime {
-    const initialState: InstrumentState = {
-      symbol: config.symbol,
-
-      ltp: config.seedPrice,
-      previousLtp: config.seedPrice,
-
-      bid: config.seedPrice,
-      ask: config.seedPrice,
-
-      bidQuantity: 0,
-      askQuantity: 0,
-      tradedQuantity: 0,
-
-      change: 0,
-      changePercent: 0,
-
-      rolling10Return: 0,
-      rollingAveragePrice: config.seedPrice,
-
-      lastUpdated: 0,
-
-      status: "STALE"
-    };
-
-    return {
-      state: initialState,
-
-      priceHistory: [config.seedPrice],
-
-      lastSequence: 0,
-
-      lastTimestamp: 0
-    };
+    return this.instruments.map(
+      (instrument) =>
+        this.runtime.get(
+          instrument.symbol
+        )!.state
+    );
   }
 
   getSequence(
-  symbol: InstrumentSymbol
-): number {
-  return (
-    this.runtime.get(symbol)?.lastSequence ??
-    0
-  );
-}
+    symbol: InstrumentSymbol
+  ): number {
+    return (
+      this.runtime.get(symbol)
+        ?.lastSequence ?? 0
+    );
+  }
 }

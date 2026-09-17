@@ -4,6 +4,7 @@ import type {
 
 import {
   setConnectionStatus,
+  upsertInstruments,
 } from "./marketSlice";
 
 import type { AppDispatch } from "../../app/store";
@@ -47,6 +48,7 @@ export class MarketWebSocketClient {
       setConnectionStatus("RECONNECTING")
     );
 
+    void this.fetchSnapshot();
     this.socket = new WebSocket(WS_URL);
 
     this.socket.onopen = () => {
@@ -57,6 +59,7 @@ export class MarketWebSocketClient {
       this.reconnectDelay =
         INITIAL_RECONNECT_DELAY;
 
+      void this.fetchSnapshot();
       this.dispatch(
         setConnectionStatus("CONNECTED")
       );
@@ -204,4 +207,42 @@ export class MarketWebSocketClient {
       typeof payload.status === "string"
     );
   }
+
+  private async fetchSnapshot(): Promise<void> {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL ??
+      "http://localhost:4000";
+
+    const response = await fetch(
+      `${baseUrl}/snapshot`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Snapshot request failed: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+
+    if (
+      !data ||
+      !Array.isArray(data.instruments)
+    ) {
+      throw new Error(
+        "Invalid snapshot response"
+      );
+    }
+
+    this.dispatch(
+      upsertInstruments(data.instruments)
+    );
+  } catch (error) {
+    console.warn(
+      "[WebSocket] Snapshot recovery failed",
+      error
+    );
+  }
+}
 }
