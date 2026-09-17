@@ -24,24 +24,24 @@ import {
 } from "../features/market/marketSelectors";
 
 import { ConnectionStatus } from "../components/ConnectionStatus/ConnectionStatus";
+import {
+  useMarketStale,
+} from "../features/market/useMarketStale";
 
 export default function HomePage() {
   useMarketStream();
 
-  const instruments =
-    useAppSelector(selectAllInstruments);
+  const instruments = useAppSelector(selectAllInstruments);
 
-  const topGainers =
-    useAppSelector(selectTopGainers);
+  const topGainers = useAppSelector(selectTopGainers);
 
-  const topLosers =
-    useAppSelector(selectTopLosers);
+  const topLosers = useAppSelector(selectTopLosers);
 
-  const topMomentum =
-    useAppSelector(selectTopMomentum);
+  const topMomentum = useAppSelector(selectTopMomentum);
 
-  const connectionStatus =
-  useAppSelector(selectConnectionStatus);
+  const connectionStatus = useAppSelector(selectConnectionStatus);
+
+  const isMarketStale = useMarketStale();
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
@@ -56,6 +56,7 @@ export default function HomePage() {
           </p>
           <ConnectionStatus
             status={connectionStatus}
+            isStale={isMarketStale}
           />
         </header>
 

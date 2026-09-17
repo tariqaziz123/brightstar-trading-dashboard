@@ -6,6 +6,7 @@ import type {
 
 interface ConnectionStatusProps {
   status: ConnectionStatus;
+  isStale: boolean;
 }
 
 const statusStyles: Record<
@@ -22,13 +23,24 @@ const statusStyles: Record<
 
 export function ConnectionStatus({
   status,
+  isStale,
 }: ConnectionStatusProps) {
+  const displayStatus =
+    status === "CONNECTED" && isStale
+      ? "STALE DATA"
+      : status;
+
+  const displayClass =
+    status === "CONNECTED" && isStale
+      ? "bg-orange-100 text-orange-700"
+      : statusStyles[status];
+
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`rounded-full px-3 py-1 text-sm font-semibold ${statusStyles[status]}`}
+        className={`rounded-full px-3 py-1 text-sm font-semibold ${displayClass}`}
       >
-        {status}
+        {displayStatus}
       </span>
 
       <span className="text-sm text-gray-500">
