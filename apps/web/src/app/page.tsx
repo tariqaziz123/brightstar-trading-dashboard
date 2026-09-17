@@ -5,6 +5,7 @@ import { MarketTable } from "../components/MarketTable/MarketTable";
 import { TopMovers } from "../components/TopMovers/TopMovers";
 import { ConnectionStatus } from "../components/ConnectionStatus/ConnectionStatus";
 import { useMarketStale } from "../features/market/useMarketStale";
+import { PriceChart } from "../components/PriceChart/PriceChart";
 
 import {
   selectAllInstruments,
@@ -108,6 +109,10 @@ export default function HomePage() {
             }
             status={connectionStatus === "CONNECTED" && !isMarketStale}
           />
+        </section>
+
+        <section className="mb-6">
+          <PriceChart instruments={instruments} />
         </section>
 
         <section className="mb-6">
