@@ -54,7 +54,7 @@ export class MarketProcessor {
 
     if (!validation.valid) {
       console.warn(
-        `[Tick rejected] ${validation.reason}`
+        `[Processor] Rejected ${tick.symbol}: ${validation.reason}`
       );
 
       return null;
@@ -71,7 +71,7 @@ export class MarketProcessor {
       tick.sequence <= runtime.lastSequence
     ) {
       console.warn(
-        `[Tick rejected] ${tick.symbol} sequence ${tick.sequence} <= ${runtime.lastSequence}`
+        `[Processor] Rejected ${tick.symbol}: duplicate/out-of-order sequence ${tick.sequence}`
       );
 
       return null;
@@ -81,7 +81,7 @@ export class MarketProcessor {
       tick.timestamp < runtime.lastTimestamp
     ) {
       console.warn(
-        `[Tick rejected] ${tick.symbol} timestamp out of order`
+         `[Processor] Rejected ${tick.symbol}: out-of-order timestamp`
       );
 
       return null;
