@@ -42,3 +42,10 @@ export const selectAllInstruments =
           instrument !== undefined
       )
   );
+
+export const selectInstrumentSymbols = (
+  state: RootState
+) =>
+  Object.keys(
+    state.market.bySymbol
+  ) as InstrumentSymbol[];

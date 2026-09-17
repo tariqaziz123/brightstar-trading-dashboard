@@ -31,7 +31,7 @@ export class MarketWebSocketClient {
     private readonly onTick: (
       event: MarketStateEvent
     ) => void
-  ) {}
+  ) { }
 
   connect(): void {
     this.stopped = false;
@@ -66,10 +66,9 @@ export class MarketWebSocketClient {
       this.handleMessage(message.data);
     };
 
-    this.socket.onerror = (error) => {
-      console.error(
-        "[WebSocket] Error",
-        error
+    this.socket.onerror = () => {
+      console.warn(
+        "[WebSocket] Connection error"
       );
     };
 
@@ -169,15 +168,11 @@ export class MarketWebSocketClient {
     const event =
       value as Record<string, unknown>;
 
-    if (
-      event.type !== "MARKET_TICK"
-    ) {
+    if (event.type !== "MARKET_TICK") {
       return false;
     }
 
-    if (
-      typeof event.timestamp !== "number"
-    ) {
+    if (typeof event.timestamp !== "number") {
       return false;
     }
 
@@ -189,18 +184,24 @@ export class MarketWebSocketClient {
     }
 
     const payload =
-      event.payload as Record<
-        string,
-        unknown
-      >;
+      event.payload as Record<string, unknown>;
 
     return (
       typeof payload.symbol === "string" &&
-      typeof payload.timestamp === "number" &&
       typeof payload.sequence === "number" &&
       typeof payload.ltp === "number" &&
+      typeof payload.previousLtp === "number" &&
       typeof payload.bid === "number" &&
-      typeof payload.ask === "number"
+      typeof payload.ask === "number" &&
+      typeof payload.bidQuantity === "number" &&
+      typeof payload.askQuantity === "number" &&
+      typeof payload.tradedQuantity === "number" &&
+      typeof payload.change === "number" &&
+      typeof payload.changePercent === "number" &&
+      typeof payload.rolling10Return === "number" &&
+      typeof payload.rollingAveragePrice === "number" &&
+      typeof payload.lastUpdated === "number" &&
+      typeof payload.status === "string"
     );
   }
 }
