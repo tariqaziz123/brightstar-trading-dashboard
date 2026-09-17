@@ -19,6 +19,12 @@ import {
 
 import { TopMovers } from "../components/TopMovers/TopMovers";
 
+import {
+  selectConnectionStatus,
+} from "../features/market/marketSelectors";
+
+import { ConnectionStatus } from "../components/ConnectionStatus/ConnectionStatus";
+
 export default function HomePage() {
   useMarketStream();
 
@@ -34,6 +40,9 @@ export default function HomePage() {
   const topMomentum =
     useAppSelector(selectTopMomentum);
 
+  const connectionStatus =
+  useAppSelector(selectConnectionStatus);
+
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-[1500px]">
@@ -45,6 +54,9 @@ export default function HomePage() {
           <p className="mt-2 text-gray-600">
             Real-time market prices and momentum scanner
           </p>
+          <ConnectionStatus
+            status={connectionStatus}
+          />
         </header>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
