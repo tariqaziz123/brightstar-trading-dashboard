@@ -1,16 +1,12 @@
 "use client";
 
-import type { InstrumentState } from "@brightstar/shared";
+import {
+  instrumentSymbols,
+} from "../../features/market/marketSelectors";
 
 import { MarketRow } from "./MarketRow";
 
-interface MarketTableProps {
-  instruments: InstrumentState[];
-}
-
-export function MarketTable({
-  instruments,
-}: MarketTableProps) {
+export function MarketTable() {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
       <table className="min-w-[1100px] w-full text-sm">
@@ -19,35 +15,27 @@ export function MarketTable({
             <th className="px-4 py-3 text-left">
               Instrument
             </th>
-
             <th className="px-4 py-3 text-right">
               LTP
             </th>
-
             <th className="px-4 py-3 text-right">
               Change
             </th>
-
             <th className="px-4 py-3 text-right">
               Change %
             </th>
-
             <th className="px-4 py-3 text-right">
               Bid
             </th>
-
             <th className="px-4 py-3 text-right">
               Ask
             </th>
-
             <th className="px-4 py-3 text-right">
               Volume
             </th>
-
             <th className="px-4 py-3 text-right">
               Momentum
             </th>
-
             <th className="px-4 py-3 text-center">
               Status
             </th>
@@ -55,12 +43,14 @@ export function MarketTable({
         </thead>
 
         <tbody>
-          {instruments.map((instrument) => (
-            <MarketRow
-              key={instrument.symbol}
-              instrument={instrument}
-            />
-          ))}
+          {instrumentSymbols.map(
+            (symbol) => (
+              <MarketRow
+                key={symbol}
+                symbol={symbol}
+              />
+            )
+          )}
         </tbody>
       </table>
     </div>

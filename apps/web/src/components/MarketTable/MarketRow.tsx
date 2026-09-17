@@ -2,13 +2,25 @@
 
 import { memo } from "react";
 
-import type { InstrumentState } from "@brightstar/shared";
+import type {
+  InstrumentSymbol,
+} from "@brightstar/shared";
+
+import {
+  useAppSelector,
+} from "../../app/hooks";
+
+import {
+  selectInstrumentBySymbol,
+} from "../../features/market/marketSelectors";
 
 interface MarketRowProps {
-  instrument: InstrumentState;
+  symbol: InstrumentSymbol;
 }
 
-function getChangeClass(changePercent: number): string {
+function getChangeClass(
+  changePercent: number
+): string {
   if (changePercent > 1) {
     return "text-green-700 bg-green-100";
   }
@@ -29,11 +41,30 @@ function getChangeClass(changePercent: number): string {
 }
 
 function MarketRowComponent({
-  instrument,
+  symbol,
 }: MarketRowProps) {
-  const changeClass = getChangeClass(
-    instrument.changePercent
-  );
+  const instrument =
+    useAppSelector(
+      selectInstrumentBySymbol(symbol)
+    );
+
+  if (!instrument) {
+    return (
+      <tr>
+        <td
+          colSpan={9}
+          className="px-4 py-3 text-center text-gray-400"
+        >
+          Waiting for {symbol}...
+        </td>
+      </tr>
+    );
+  }
+
+  const changeClass =
+    getChangeClass(
+      instrument.changePercent
+    );
 
   return (
     <tr className="border-b border-gray-200">
@@ -86,6 +117,5 @@ function MarketRowComponent({
   );
 }
 
-export const MarketRow = memo(
-  MarketRowComponent
-);
+export const MarketRow =
+  memo(MarketRowComponent);

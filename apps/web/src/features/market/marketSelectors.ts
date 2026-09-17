@@ -49,3 +49,12 @@ export const selectInstrumentSymbols = (
   Object.keys(
     state.market.bySymbol
   ) as InstrumentSymbol[];
+
+export const instrumentSymbols: InstrumentSymbol[] = [
+  "NIFTY",
+  "BANKNIFTY",
+  "RELIANCE",
+  "HDFCBANK",
+  "INFY",
+  "TCS",
+];

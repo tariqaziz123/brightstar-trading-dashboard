@@ -31,8 +31,6 @@ import {
 export default function HomePage() {
   useMarketStream();
 
-  const instruments = useAppSelector(selectAllInstruments);
-
   const topGainers = useAppSelector(selectTopGainers);
 
   const topLosers = useAppSelector(selectTopLosers);
@@ -86,9 +84,7 @@ export default function HomePage() {
           />
         </div>
 
-        <MarketTable
-          instruments={instruments}
-        />
+        <MarketTable />
       </div>
     </main>
   );
