@@ -4,7 +4,13 @@ export type InstrumentSymbol =
   | "RELIANCE"
   | "HDFCBANK"
   | "INFY"
-  | "TCS";
+  | "TCS"
+  | "ICICIBANK"
+  | "SBIN"
+  | "BHARTIARTL"
+  | "ITC"
+  | "LT"
+  | "AXISBANK";
 
   export interface InstrumentConfig {
   symbol: InstrumentSymbol;
@@ -43,23 +49,18 @@ export type ConnectionStatus =
 
 export interface InstrumentState {
   symbol: InstrumentSymbol;
-
+  sequence: number;
   ltp: number;
   previousLtp: number;
-
   bid: number;
   ask: number;
-
   bidQuantity: number;
   askQuantity: number;
   tradedQuantity: number;
-
   change: number;
   changePercent: number;
-
   rolling10Return: number;
   rollingAveragePrice: number;
-
   lastUpdated: number;
   status: "LIVE" | "STALE";
 }
@@ -70,6 +71,12 @@ export interface MarketState {
   connectionStatus: ConnectionStatus;
 
   lastEventAt: number | null;
+}
+
+export interface MarketStateEvent {
+  type: "MARKET_TICK";
+  timestamp: number;
+  payload: InstrumentState;
 }
 
 export interface MarketSnapshot {

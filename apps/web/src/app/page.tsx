@@ -4,8 +4,8 @@ import { useMarketStream } from "../features/market/useMarketStream";
 import { MarketTable } from "../components/MarketTable/MarketTable";
 import { TopMovers } from "../components/TopMovers/TopMovers";
 import { ConnectionStatus } from "../components/ConnectionStatus/ConnectionStatus";
-import { useMarketStale } from "../features/market/useMarketStale";
 import { PriceChart } from "../components/PriceChart/PriceChart";
+import { useMarketStale } from "../features/market/useMarketStale";
 
 import {
   selectAllInstruments,
@@ -41,9 +41,14 @@ export default function HomePage() {
     0
   );
 
+  // Each instrument generates one tick every 100ms = 10 ticks/sec.
+  // The value stays dynamic if the tracked instrument count changes.
+  const estimatedTicksPerSecond = instruments.length * 10;
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8">
+        {/* Header */}
         <header className="mb-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -80,6 +85,7 @@ export default function HomePage() {
           </div>
         </header>
 
+        {/* Market Metrics */}
         <section className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             label="Tracked Instruments"
@@ -89,7 +95,7 @@ export default function HomePage() {
 
           <MetricCard
             label="Market Stream"
-            value="~60"
+            value={`~${estimatedTicksPerSecond}`}
             detail="ticks / second"
           />
 
@@ -111,10 +117,12 @@ export default function HomePage() {
           />
         </section>
 
+        {/* Price Chart */}
         <section className="mb-6">
           <PriceChart instruments={instruments} />
         </section>
 
+        {/* Momentum Scanner */}
         <section className="mb-6">
           <div className="mb-3">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -147,6 +155,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Live Market Table */}
         <section>
           <div className="mb-3">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -163,9 +172,13 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Footer */}
         <footer className="mt-6 flex flex-col gap-2 border-t border-slate-900 pt-4 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
           <span>Brightstar Real-Time Market Watch</span>
-          <span>WebSocket streaming · Redux Toolkit · 50ms batching</span>
+
+          <span>
+            WebSocket streaming · Redux Toolkit · 50ms batching
+          </span>
         </footer>
       </div>
     </main>
@@ -200,7 +213,9 @@ function MetricCard({
           {value}
         </p>
 
-        <p className="mt-1 text-xs text-slate-500">{detail}</p>
+        <p className="mt-1 text-xs text-slate-500">
+          {detail}
+        </p>
       </div>
     </div>
   );
